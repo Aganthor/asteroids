@@ -4,9 +4,8 @@ Il suffit de modifier les méthodes nécessaires à votre jeu.
 """
 import arcade
 
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
-SCREEN_TITLE = "Astéroïdes!"
+from player import Player, Direction
+import game_constants as gc
 
 
 class MyGame(arcade.Window):
@@ -24,6 +23,18 @@ class MyGame(arcade.Window):
 
         # Si vous avez des listes de sprites, il faut les créer ici et les
         # initialiser à None.
+        self.player = None
+        # Used to turn the ship
+        self.turn_left_pressed = False
+        self.turn_right_pressed = False
+        # Used to accelerate or decelerate the ship
+        self.decelerate_pressed = False
+        self.accelerate_pressed = False
+
+        # Little helper to prevent multiple acceleration with only one key_press.
+        self.action_done = False
+
+        self.player_list = None
 
     def setup(self):
         """
@@ -32,7 +43,13 @@ class MyGame(arcade.Window):
         """
         # C'est ici que vous allez créer vos listes de sprites et vos sprites.
         # C'est aussi ici que vous charger les sons de votre jeu.
-        pass
+        self.player = Player()
+        self.player.center_x = 400
+        self.player.center_y = 400
+        self.player_list = arcade.SpriteList()
+        self.player_list.append(self.player)
+
+        # arcade.Schedule pour programmer des "events"
 
     def on_draw(self):
         """
@@ -46,6 +63,8 @@ class MyGame(arcade.Window):
 
         # Invoquer la méthode "draw()" de vos sprites ici.
 
+        self.player_list.draw()
+
     def on_update(self, delta_time):
         """
         Toute la logique pour déplacer les objets de votre jeu et de
@@ -54,6 +73,21 @@ class MyGame(arcade.Window):
         Paramètre:
             - delta_time : le nombre de milliseconde depuis le dernier update.
         """
+
+        if self.turn_left_pressed and not self.turn_right_pressed:
+            self.player.rotate_ship(Direction.LEFT)
+        elif self.turn_right_pressed and not self.turn_left_pressed:
+            self.player.rotate_ship(Direction.RIGHT)
+        elif self.accelerate_pressed and not self.decelerate_pressed:
+            if not self.action_done:
+                self.player.accelerate()
+                self.action_done = True
+        elif self.decelerate_pressed and not self.accelerate_pressed:
+            if not self.action_done:
+                self.player.decelerate()
+                self.action_done = True
+
+        self.player_list.update()
 
     def on_key_press(self, key, key_modifiers):
         """
@@ -66,7 +100,15 @@ class MyGame(arcade.Window):
         Pour connaître la liste des touches possibles:
         http://arcade.academy/arcade.key.html
         """
-        pass
+        print(key)
+        if key == arcade.key.LEFT or key == arcade.key.A:
+            self.turn_left_pressed = True
+        if key == arcade.key.RIGHT or key == arcade.key.D:
+            self.turn_right_pressed = True
+        if key == arcade.key.UP or key == arcade.key.W:
+            self.accelerate_pressed = True
+        if key == arcade.key.DOWN or key == arcade.key.S:
+            self.decelerate_pressed = True
 
     def on_key_release(self, key, key_modifiers):
         """
@@ -75,16 +117,16 @@ class MyGame(arcade.Window):
             - key: la touche relâchée
             - key_modifiers: est-ce que l'usager appuie sur "shift" ou "ctrl" ?
         """
-        pass
-
-    def on_mouse_motion(self, x, y, delta_x, delta_y):
-        """
-        Méthode invoquée lorsque le curseur de la souris se déplace dans la fenêtre.
-        Paramètres:
-            - x, y: les coordonnées de l'emplacement actuel de la sourir
-            - delta_X, delta_y: le changement (x et y) depuis la dernière fois que la méthode a été invoqué.
-        """
-        pass
+        if key == arcade.key.LEFT or key == arcade.key.A:
+            self.turn_left_pressed = False
+        if key == arcade.key.RIGHT or key == arcade.key.D:
+            self.turn_right_pressed = False
+        if key == arcade.key.UP or key == arcade.key.W:
+            self.accelerate_pressed = False
+            self.action_done = False
+        if key == arcade.key.DOWN or key == arcade.key.S:
+            self.decelerate_pressed = False
+            self.action_done = False
 
     def on_mouse_press(self, x, y, button, key_modifiers):
         """
@@ -109,7 +151,7 @@ class MyGame(arcade.Window):
 
 def main():
     """ Main method """
-    game = MyGame(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+    game = MyGame(gc.SCREEN_WIDTH, gc.SCREEN_HEIGHT, gc.SCREEN_TITLE)
     game.setup()
     arcade.run()
 
