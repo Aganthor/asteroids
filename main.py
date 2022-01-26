@@ -64,6 +64,7 @@ class MyGame(arcade.Window):
         # Invoquer la méthode "draw()" de vos sprites ici.
 
         self.player_list.draw()
+        self.player.bullet_list.draw()
 
     def on_update(self, delta_time):
         """
@@ -88,6 +89,7 @@ class MyGame(arcade.Window):
                 self.action_done = True
 
         self.player_list.update()
+        self.player.bullet_list.update()
 
     def on_key_press(self, key, key_modifiers):
         """
@@ -109,6 +111,8 @@ class MyGame(arcade.Window):
             self.accelerate_pressed = True
         if key == arcade.key.DOWN or key == arcade.key.S:
             self.decelerate_pressed = True
+        if key == arcade.key.SPACE:
+            self.player.fire_bullet()
 
     def on_key_release(self, key, key_modifiers):
         """
