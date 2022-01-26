@@ -30,9 +30,9 @@ class Player(arcade.Sprite):
         bullet.center_x = self.center_x + self.width / 1.5
         bullet.center_y = self.center_y + self.height / 1.5
 
-        bullet.angle = math.degrees(self.angle)
-        bullet.change_x = math.cos(bullet.angle) * Player.BULLET_SPEED
-        bullet.change_y = math.sin(bullet.angle) * Player.BULLET_SPEED
+        bullet.angle = self.angle
+        bullet.change_x = math.cos(self.radians) * Player.BULLET_SPEED
+        bullet.change_y = math.sin(self.radians) * Player.BULLET_SPEED
 
         self.bullet_list.append(bullet)
 
