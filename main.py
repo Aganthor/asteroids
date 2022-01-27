@@ -66,6 +66,9 @@ class MyGame(arcade.Window):
         self.player_list.draw()
         self.player.bullet_list.draw()
 
+        angle_message = f"Player angle is {self.player.angle}, Player radians is {self.player.radians}"
+        arcade.draw_text(angle_message, 10, 10, arcade.color.WHITE_SMOKE, 18)
+
     def on_update(self, delta_time):
         """
         Toute la logique pour déplacer les objets de votre jeu et de
