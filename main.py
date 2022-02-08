@@ -66,8 +66,8 @@ class MyGame(arcade.Window):
         self.player_list.draw()
         self.player.bullet_list.draw()
 
-        angle_message = f"Player angle is {self.player.angle}, Player radians is {self.player.radians}"
-        arcade.draw_text(angle_message, 10, 10, arcade.color.WHITE_SMOKE, 18)
+        arcade.draw_text(f"Ship speed is {self.player.speed}", 10, 30, arcade.color.WHITE_SMOKE, 16)
+        arcade.draw_text(f"Bullet qty is {len(self.player.bullet_list)}", 10, 10, arcade.color.WHITE_SMOKE, 16)
 
     def on_update(self, delta_time):
         """
@@ -92,7 +92,6 @@ class MyGame(arcade.Window):
                 self.action_done = True
 
         self.player_list.update()
-        self.player.bullet_list.update()
 
     def on_key_press(self, key, key_modifiers):
         """
@@ -105,7 +104,6 @@ class MyGame(arcade.Window):
         Pour connaître la liste des touches possibles:
         http://arcade.academy/arcade.key.html
         """
-        print(key)
         if key == arcade.key.LEFT or key == arcade.key.A:
             self.turn_left_pressed = True
         if key == arcade.key.RIGHT or key == arcade.key.D:
