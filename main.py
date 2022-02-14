@@ -2,6 +2,7 @@
 Modèle de départ pour la programmation Arcade.
 Il suffit de modifier les méthodes nécessaires à votre jeu.
 """
+import random
 import arcade
 
 from player import Player, Direction
@@ -35,6 +36,7 @@ class MyGame(arcade.Window):
         self.action_done = False
 
         self.player_list = None
+        self.asteroids_list = None
 
     def setup(self):
         """
@@ -49,7 +51,36 @@ class MyGame(arcade.Window):
         self.player_list = arcade.SpriteList()
         self.player_list.append(self.player)
 
+        self.asteroids_list = arcade.SpriteList()
         # arcade.Schedule pour programmer des "events"
+        arcade.schedule(self.spawn_asteroids, 3)
+
+    def spawn_asteroids(self, delta_time):
+        print("Spawning a new asteroid!")
+        asteroid_size = random.randrange(3)
+        asteroid = None
+        if asteroid_size == 0:
+            # There are 4 different types of big asteroids.
+            big_one = random.randrange(1, 5)
+            filename = f":resources:images/space_shooter/meteorGrey_big{big_one}.png"
+            asteroid = arcade.Sprite(filename, 0.5)
+        elif asteroid_size == 1:
+            med_one = random.randrange(1, 3)
+            filename = f":resources:images/space_shooter/meteorGrey_med{med_one}.png"            
+            asteroid = arcade.Sprite(filename, 0.5)
+        elif asteroid_size == 2:
+            small_one = random.randrange(1, 3)
+            filename = f":resources:images/space_shooter/meteorGrey_small{small_one}.png"            
+            asteroid = arcade.Sprite(filename, 0.5)
+
+        asteroid.center_x = random.randrange(0 + int(asteroid.width), gc.SCREEN_WIDTH - int(asteroid.width))
+        asteroid.center_y = random.randrange(0 + int(asteroid.height), gc.SCREEN_HEIGHT - int(asteroid.height))
+
+        if self.player.collides_with_point(asteroid.center_x, asteroid.center_y):
+            print("Bang! Spawns on ship...")
+
+        self.asteroids_list.append(asteroid)
+
 
     def on_draw(self):
         """
@@ -65,6 +96,7 @@ class MyGame(arcade.Window):
 
         self.player_list.draw()
         self.player.bullet_list.draw()
+        self.asteroids_list.draw()
 
         arcade.draw_text(f"Ship speed is {self.player.speed}", 10, 30, arcade.color.WHITE_SMOKE, 16)
         arcade.draw_text(f"Bullet qty is {len(self.player.bullet_list)}", 10, 10, arcade.color.WHITE_SMOKE, 16)
