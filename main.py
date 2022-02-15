@@ -56,7 +56,11 @@ class MyGame(arcade.Window):
         arcade.schedule(self.spawn_asteroids, 3)
 
     def spawn_asteroids(self, delta_time):
-        print("Spawning a new asteroid!")
+        """_summary_
+
+        Args:
+            delta_time (_type_): _description_
+        """
         asteroid_size = random.randrange(3)
         asteroid = None
         if asteroid_size == 0:
@@ -76,7 +80,7 @@ class MyGame(arcade.Window):
         asteroid.center_x = random.randrange(0 + int(asteroid.width), gc.SCREEN_WIDTH - int(asteroid.width))
         asteroid.center_y = random.randrange(0 + int(asteroid.height), gc.SCREEN_HEIGHT - int(asteroid.height))
 
-        if self.player.collides_with_point(asteroid.center_x, asteroid.center_y):
+        if self.player.collides_with_point((asteroid.center_x, asteroid.center_y)):
             print("Bang! Spawns on ship...")
 
         self.asteroids_list.append(asteroid)
