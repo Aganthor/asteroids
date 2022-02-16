@@ -7,6 +7,8 @@ import arcade
 
 from player import Player, Direction
 import game_constants as gc
+from explosion import ExplosionAnimation
+from game_state import GameState
 
 
 class MyGame(arcade.Window):
@@ -34,9 +36,12 @@ class MyGame(arcade.Window):
 
         # Little helper to prevent multiple acceleration with only one key_press.
         self.action_done = False
+        self.explosion_animation = ExplosionAnimation()
 
         self.player_list = None
         self.asteroids_list = None
+
+        self.game_state = GameState.RUNNING
 
     def setup(self):
         """
@@ -98,9 +103,12 @@ class MyGame(arcade.Window):
 
         # Invoquer la méthode "draw()" de vos sprites ici.
 
-        self.player_list.draw()
-        self.player.bullet_list.draw()
-        self.asteroids_list.draw()
+        if self.game_state == GameState.PLAYER_EXPLOSION:
+            self.explosion_animation.draw()
+        else:
+            self.player_list.draw()
+            self.player.bullet_list.draw()
+            self.asteroids_list.draw()
 
         arcade.draw_text(f"Ship speed is {self.player.speed}", 10, 30, arcade.color.WHITE_SMOKE, 16)
         arcade.draw_text(f"Bullet qty is {len(self.player.bullet_list)}", 10, 10, arcade.color.WHITE_SMOKE, 16)
@@ -113,21 +121,33 @@ class MyGame(arcade.Window):
         Paramètre:
             - delta_time : le nombre de milliseconde depuis le dernier update.
         """
+        if self.game_state == GameState.RUNNING:
+            # Player movement
+            if self.turn_left_pressed and not self.turn_right_pressed:
+                self.player.rotate_ship(Direction.LEFT)
+            elif self.turn_right_pressed and not self.turn_left_pressed:
+                self.player.rotate_ship(Direction.RIGHT)
+            elif self.accelerate_pressed and not self.decelerate_pressed:
+                if not self.action_done:
+                    self.player.accelerate()
+                    self.action_done = True
+            elif self.decelerate_pressed and not self.accelerate_pressed:
+                if not self.action_done:
+                    self.player.decelerate()
+                    self.action_done = True
+            self.player_list.update()
 
-        if self.turn_left_pressed and not self.turn_right_pressed:
-            self.player.rotate_ship(Direction.LEFT)
-        elif self.turn_right_pressed and not self.turn_left_pressed:
-            self.player.rotate_ship(Direction.RIGHT)
-        elif self.accelerate_pressed and not self.decelerate_pressed:
-            if not self.action_done:
-                self.player.accelerate()
-                self.action_done = True
-        elif self.decelerate_pressed and not self.accelerate_pressed:
-            if not self.action_done:
-                self.player.decelerate()
-                self.action_done = True
-
-        self.player_list.update()
+            # Check for collision
+            asteroid_hit = arcade.check_for_collision_with_list(self.player, self.asteroids_list)
+            if len(asteroid_hit) > 0:
+                self.explosion_animation.center_x = self.player.center_x
+                self.explosion_animation.center_y = self.player.center_y
+                self.game_state = GameState.PLAYER_EXPLOSION            
+        elif self.game_state == GameState.PLAYER_EXPLOSION:
+            self.explosion_animation.on_update(delta_time)
+            if self.explosion_animation.is_animation_over():
+                self.explosion_animation.kill()
+                self.game_state = GameState.RUNNING
 
     def on_key_press(self, key, key_modifiers):
         """
