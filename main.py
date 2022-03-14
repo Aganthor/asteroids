@@ -3,6 +3,7 @@ Modèle de départ pour la programmation Arcade.
 Il suffit de modifier les méthodes nécessaires à votre jeu.
 """
 import random
+from telnetlib import GA
 import arcade
 
 from player import Player, Direction
@@ -105,13 +106,14 @@ class MyGame(arcade.Window):
 
         if self.game_state == GameState.PLAYER_EXPLOSION:
             self.explosion_animation.draw()
-        else:
+        elif self.game_state == GameState.RUNNING:
             self.player_list.draw()
             self.player.bullet_list.draw()
             self.asteroids_list.draw()
 
         arcade.draw_text(f"Ship speed is {self.player.speed}", 10, 30, arcade.color.WHITE_SMOKE, 16)
         arcade.draw_text(f"Bullet qty is {len(self.player.bullet_list)}", 10, 10, arcade.color.WHITE_SMOKE, 16)
+        arcade.draw_text(f"Asteroid count = {len(self.asteroids_list)}", 300, 10, arcade.color.RED, 16)
 
     def on_update(self, delta_time):
         """
@@ -135,18 +137,28 @@ class MyGame(arcade.Window):
                 if not self.action_done:
                     self.player.decelerate()
                     self.action_done = True
+
             self.player_list.update()
 
-            # Check for collision
-            asteroid_hit = arcade.check_for_collision_with_list(self.player, self.asteroids_list)
-            if len(asteroid_hit) > 0:
+            # Check for collision between ship and asteroids
+            player_hit = arcade.check_for_collision_with_list(self.player, self.asteroids_list)
+            if len(player_hit) > 0:
                 self.explosion_animation.center_x = self.player.center_x
                 self.explosion_animation.center_y = self.player.center_y
-                self.game_state = GameState.PLAYER_EXPLOSION            
+                self.game_state = GameState.PLAYER_EXPLOSION
+                return
+                
+            # Check to see if collision between bullets and asteroids.
+            for bullet in self.player.bullet_list:
+                asteroid_hit_list = arcade.check_for_collision_with_list(bullet, self.asteroids_list)
+                for asteroid in asteroid_hit_list:
+                    asteroid.kill()
+                    bullet.kill()
+
         elif self.game_state == GameState.PLAYER_EXPLOSION:
             self.explosion_animation.on_update(delta_time)
             if self.explosion_animation.is_animation_over():
-                self.explosion_animation.kill()
+                #self.explosion_animation.kill()
                 self.game_state = GameState.RUNNING
 
     def on_key_press(self, key, key_modifiers):
