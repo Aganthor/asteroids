@@ -71,6 +71,7 @@ class Player(arcade.Sprite):
         if self.center_x + self.width / 1.5 > gc.SCREEN_WIDTH:
             self.center_x = 0 + self.width
 
+        # Check to see if bullets go out of bounds.
         for bullet in self.bullet_list:
             bullet.update()
             if bullet.center_x > gc.SCREEN_WIDTH or bullet.center_x < 0:
