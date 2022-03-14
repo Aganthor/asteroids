@@ -8,7 +8,7 @@ import arcade
 
 
 class ExplosionAnimation(arcade.Sprite):
-    EXPLOSION_SCALE = 0.50
+    EXPLOSION_SCALE = 0.75
     ANIMATION_SPEED = 10.0
     MAX_CYCLE_TIME = 2
 
