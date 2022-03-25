@@ -3,13 +3,13 @@ Modèle de départ pour la programmation Arcade.
 Il suffit de modifier les méthodes nécessaires à votre jeu.
 """
 import random
-from telnetlib import GA
 import arcade
 
 from player import Player, Direction
 import game_constants as gc
 from explosion import ExplosionAnimation
 from game_state import GameState
+from asteroid import Asteroid, AsteroidSize
 
 
 class MyGame(arcade.Window):
@@ -25,8 +25,6 @@ class MyGame(arcade.Window):
 
         arcade.set_background_color(arcade.color.BLACK)
 
-        # Si vous avez des listes de sprites, il faut les créer ici et les
-        # initialiser à None.
         self.player = None
         # Used to turn the ship
         self.turn_left_pressed = False
@@ -37,12 +35,14 @@ class MyGame(arcade.Window):
 
         # Little helper to prevent multiple acceleration with only one key_press.
         self.action_done = False
-        self.explosion_animation = ExplosionAnimation()
+        self.explosion_animation = None
 
         self.player_list = None
         self.asteroids_list = None
 
         self.game_state = GameState.RUNNING
+
+        self.player_score = 0
 
     def setup(self):
         """
@@ -52,12 +52,14 @@ class MyGame(arcade.Window):
         # C'est ici que vous allez créer vos listes de sprites et vos sprites.
         # C'est aussi ici que vous charger les sons de votre jeu.
         self.player = Player()
-        self.player.center_x = 400
-        self.player.center_y = 400
+        self.player.center_x = gc.SCREEN_WIDTH / 2
+        self.player.center_y = gc.SCREEN_HEIGHT / 2
         self.player_list = arcade.SpriteList()
         self.player_list.append(self.player)
 
         self.asteroids_list = arcade.SpriteList()
+        self.explosion_animation = ExplosionAnimation()
+
         # arcade.Schedule pour programmer des "events"
         arcade.schedule(self.spawn_asteroids, 3)
 
@@ -73,21 +75,22 @@ class MyGame(arcade.Window):
             # There are 4 different types of big asteroids.
             big_one = random.randrange(1, 5)
             filename = f":resources:images/space_shooter/meteorGrey_big{big_one}.png"
-            asteroid = arcade.Sprite(filename, 0.5)
+            asteroid = Asteroid(filename, 0.5, AsteroidSize.LARGE)
         elif asteroid_size == 1:
             med_one = random.randrange(1, 3)
             filename = f":resources:images/space_shooter/meteorGrey_med{med_one}.png"            
-            asteroid = arcade.Sprite(filename, 0.5)
+            asteroid = Asteroid(filename, 0.5, AsteroidSize.MEDIUM)
         elif asteroid_size == 2:
             small_one = random.randrange(1, 3)
             filename = f":resources:images/space_shooter/meteorGrey_small{small_one}.png"            
-            asteroid = arcade.Sprite(filename, 0.5)
+            asteroid = Asteroid(filename, 0.5, AsteroidSize.SMALL)
 
         asteroid.center_x = random.randrange(0 + int(asteroid.width), gc.SCREEN_WIDTH - int(asteroid.width))
         asteroid.center_y = random.randrange(0 + int(asteroid.height), gc.SCREEN_HEIGHT - int(asteroid.height))
 
-        if self.player.collides_with_point((asteroid.center_x, asteroid.center_y)):
-            print("Bang! Spawns on ship...")
+        while self.player.collides_with_point(((asteroid.center_x, asteroid.center_y))):
+            asteroid.center_x = random.randrange(0 + int(asteroid.width), gc.SCREEN_WIDTH - int(asteroid.width))
+            asteroid.center_y = random.randrange(0 + int(asteroid.height), gc.SCREEN_HEIGHT - int(asteroid.height))
 
         self.asteroids_list.append(asteroid)
 
@@ -97,12 +100,7 @@ class MyGame(arcade.Window):
         C'est la méthode que Arcade invoque à chaque "frame" pour afficher les éléments
         de votre jeu à l'écran.
         """
-
-        # Cette commande permet d'effacer l'écran avant de dessiner. Elle va dessiner l'arrière
-        # plan selon la couleur spécifié avec la méthode "set_background_color".
         arcade.start_render()
-
-        # Invoquer la méthode "draw()" de vos sprites ici.
 
         if self.game_state == GameState.PLAYER_EXPLOSION:
             self.explosion_animation.draw()
@@ -110,6 +108,10 @@ class MyGame(arcade.Window):
             self.player_list.draw()
             self.player.bullet_list.draw()
             self.asteroids_list.draw()
+            arcade.draw_text(f"Score : {self.player_score}", 10, gc.SCREEN_HEIGHT - 15, arcade.color.AERO_BLUE)
+            arcade.draw_text(f"Lives : {self.player.lives}", gc.SCREEN_WIDTH - 100, gc.SCREEN_HEIGHT - 15, arcade.color.AERO_BLUE)
+        elif self.game_state == GameState.GAME_OVER:
+            pass
 
         arcade.draw_text(f"Ship speed is {self.player.speed}", 10, 30, arcade.color.WHITE_SMOKE, 16)
         arcade.draw_text(f"Bullet qty is {len(self.player.bullet_list)}", 10, 10, arcade.color.WHITE_SMOKE, 16)
@@ -146,15 +148,18 @@ class MyGame(arcade.Window):
                 self.explosion_animation.center_x = self.player.center_x
                 self.explosion_animation.center_y = self.player.center_y
                 self.game_state = GameState.PLAYER_EXPLOSION
+                self.player.lives -= 1
+                if not self.player.is_alive():
+                    self.game_state  =GameState.GAME_OVER
                 return
                 
             # Check to see if collision between bullets and asteroids.
             for bullet in self.player.bullet_list:
                 asteroid_hit_list = arcade.check_for_collision_with_list(bullet, self.asteroids_list)
                 for asteroid in asteroid_hit_list:
+                    self.player_score += asteroid.get_score()
                     asteroid.kill()
                     bullet.kill()
-
         elif self.game_state == GameState.PLAYER_EXPLOSION:
             self.explosion_animation.on_update(delta_time)
             if self.explosion_animation.is_animation_over():
