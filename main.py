@@ -1,15 +1,24 @@
 """
-Modèle de départ pour la programmation Arcade.
-Il suffit de modifier les méthodes nécessaires à votre jeu.
+TODO:
+- player energy:
+    when shooting bullets, it takes energy. You have to wait to gather some more.
+    display a progress bar to show energy level
+- asteroids:
+    create a class in order to add a score relative to the size.
+    when destroyed, bigger asteroids will spawn smaller ones around it.
+- GUI:
+    Have a GUI of some sort to render game information such as score, energy level
+    player lives.
 """
 import random
-from telnetlib import GA
+
 import arcade
 
 from player import Player, Direction
 import game_constants as gc
 from explosion import ExplosionAnimation
 from game_state import GameState
+from asteroids import Asteroid
 
 
 class MyGame(arcade.Window):
@@ -28,6 +37,8 @@ class MyGame(arcade.Window):
         # Si vous avez des listes de sprites, il faut les créer ici et les
         # initialiser à None.
         self.player = None
+        self.player_score = 0
+
         # Used to turn the ship
         self.turn_left_pressed = False
         self.turn_right_pressed = False
@@ -62,35 +73,12 @@ class MyGame(arcade.Window):
         arcade.schedule(self.spawn_asteroids, 3)
 
     def spawn_asteroids(self, delta_time):
-        """_summary_
-
+        """
+        Will spawn an asteroid in the game. The size is random.
         Args:
             delta_time (_type_): _description_
         """
-        asteroid_size = random.randrange(3)
-        asteroid = None
-        if asteroid_size == 0:
-            # There are 4 different types of big asteroids.
-            big_one = random.randrange(1, 5)
-            filename = f":resources:images/space_shooter/meteorGrey_big{big_one}.png"
-            asteroid = arcade.Sprite(filename, 0.5)
-        elif asteroid_size == 1:
-            med_one = random.randrange(1, 3)
-            filename = f":resources:images/space_shooter/meteorGrey_med{med_one}.png"            
-            asteroid = arcade.Sprite(filename, 0.5)
-        elif asteroid_size == 2:
-            small_one = random.randrange(1, 3)
-            filename = f":resources:images/space_shooter/meteorGrey_small{small_one}.png"            
-            asteroid = arcade.Sprite(filename, 0.5)
-
-        asteroid.center_x = random.randrange(0 + int(asteroid.width), gc.SCREEN_WIDTH - int(asteroid.width))
-        asteroid.center_y = random.randrange(0 + int(asteroid.height), gc.SCREEN_HEIGHT - int(asteroid.height))
-
-        if self.player.collides_with_point((asteroid.center_x, asteroid.center_y)):
-            print("Bang! Spawns on ship...")
-
-        self.asteroids_list.append(asteroid)
-
+        self.asteroids_list.append(Asteroid(self.player))
 
     def on_draw(self):
         """
@@ -114,6 +102,7 @@ class MyGame(arcade.Window):
         arcade.draw_text(f"Ship speed is {self.player.speed}", 10, 30, arcade.color.WHITE_SMOKE, 16)
         arcade.draw_text(f"Bullet qty is {len(self.player.bullet_list)}", 10, 10, arcade.color.WHITE_SMOKE, 16)
         arcade.draw_text(f"Asteroid count = {len(self.asteroids_list)}", 300, 10, arcade.color.RED, 16)
+        arcade.draw_text(f"Score {self.player_score}", 10, gc.SCREEN_HEIGHT - 30, arcade.color.RED, 16)
 
     def on_update(self, delta_time):
         """
@@ -152,6 +141,7 @@ class MyGame(arcade.Window):
             for bullet in self.player.bullet_list:
                 asteroid_hit_list = arcade.check_for_collision_with_list(bullet, self.asteroids_list)
                 for asteroid in asteroid_hit_list:
+                    self.player_score += asteroid.score
                     asteroid.kill()
                     bullet.kill()
 
