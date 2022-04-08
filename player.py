@@ -78,3 +78,6 @@ class Player(arcade.Sprite):
                 bullet.remove_from_sprite_lists()
             if bullet.center_y > gc.SCREEN_HEIGHT or bullet.center_y < 0:
                 bullet.remove_from_sprite_lists()
+
+    def is_alive(self):
+        return self.lives > 0
