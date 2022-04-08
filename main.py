@@ -4,7 +4,7 @@ TODO:
     when shooting bullets, it takes energy. You have to wait to gather some more.
     display a progress bar to show energy level
 - asteroids:
-    create a class in order to add a score relative to the size.
+    DONE - create a class in order to add a score relative to the size.
     when destroyed, bigger asteroids will spawn smaller ones around it.
 - GUI:
     Have a GUI of some sort to render game information such as score, energy level
@@ -18,7 +18,7 @@ from player import Player, Direction
 import game_constants as gc
 from explosion import ExplosionAnimation
 from game_state import GameState
-from asteroids import Asteroid
+from asteroids import Asteroid, AsteroidSize
 
 
 class MyGame(arcade.Window):
@@ -90,8 +90,6 @@ class MyGame(arcade.Window):
         # plan selon la couleur spécifié avec la méthode "set_background_color".
         arcade.start_render()
 
-        # Invoquer la méthode "draw()" de vos sprites ici.
-
         if self.game_state == GameState.PLAYER_EXPLOSION:
             self.explosion_animation.draw()
         elif self.game_state == GameState.RUNNING:
@@ -99,10 +97,17 @@ class MyGame(arcade.Window):
             self.player.bullet_list.draw()
             self.asteroids_list.draw()
 
-        arcade.draw_text(f"Ship speed is {self.player.speed}", 10, 30, arcade.color.WHITE_SMOKE, 16)
-        arcade.draw_text(f"Bullet qty is {len(self.player.bullet_list)}", 10, 10, arcade.color.WHITE_SMOKE, 16)
-        arcade.draw_text(f"Asteroid count = {len(self.asteroids_list)}", 300, 10, arcade.color.RED, 16)
-        arcade.draw_text(f"Score {self.player_score}", 10, gc.SCREEN_HEIGHT - 30, arcade.color.RED, 16)
+            arcade.draw_text(f"Ship speed is {self.player.speed}", 10, 30, arcade.color.WHITE_SMOKE, 16)
+            arcade.draw_text(f"Bullet qty is {len(self.player.bullet_list)}", 10, 10, arcade.color.WHITE_SMOKE, 16)
+            arcade.draw_text(f"Asteroid count = {len(self.asteroids_list)}", 300, 10, arcade.color.RED, 16)
+            arcade.draw_text(f"Score {self.player_score}", 10, gc.SCREEN_HEIGHT - 30, arcade.color.RED, 16)
+        elif self.game_state == GameState.GAME_OVER:
+            arcade.draw_text(
+                "GAME OVER! Press space to start a new game.",
+                0,
+                gc.SCREEN_HEIGHT / 2,
+                arcade.color.RADICAL_RED,
+                24, width=gc.SCREEN_WIDTH, align="center")
 
     def on_update(self, delta_time):
         """
@@ -128,13 +133,22 @@ class MyGame(arcade.Window):
                     self.action_done = True
 
             self.player_list.update()
+            self.asteroids_list.update()
 
             # Check for collision between ship and asteroids
             player_hit = arcade.check_for_collision_with_list(self.player, self.asteroids_list)
             if len(player_hit) > 0:
                 self.explosion_animation.center_x = self.player.center_x
                 self.explosion_animation.center_y = self.player.center_y
+                self.explosion_animation.visible = True
                 self.game_state = GameState.PLAYER_EXPLOSION
+
+                self.player.lives -= 1
+
+                # Remove the faulty asteroid
+                for asteroid in player_hit:
+                    asteroid.kill()
+
                 return
                 
             # Check to see if collision between bullets and asteroids.
@@ -142,14 +156,49 @@ class MyGame(arcade.Window):
                 asteroid_hit_list = arcade.check_for_collision_with_list(bullet, self.asteroids_list)
                 for asteroid in asteroid_hit_list:
                     self.player_score += asteroid.score
+                    self.explode_asteroid(asteroid)
                     asteroid.kill()
                     bullet.kill()
-
         elif self.game_state == GameState.PLAYER_EXPLOSION:
-            self.explosion_animation.on_update(delta_time)
             if self.explosion_animation.is_animation_over():
-                #self.explosion_animation.kill()
+                self.explosion_animation.reset()
+                self.explosion_animation.visible = False
                 self.game_state = GameState.RUNNING
+
+                if not self.player.is_alive():
+                    self.game_state = GameState.GAME_OVER
+                    return
+
+            else:
+                self.explosion_animation.on_update(delta_time)
+
+    def explode_asteroid(self, asteroid):
+        """
+        Will spawn a number of smaller sized asteroid if the one destroyed is big or medium.
+        :param asteroid: the asteroid being destroyed
+        :return: None
+        """
+        if asteroid.size == AsteroidSize.BIG:
+            # Split big on into two medium ones
+            medium_1 = Asteroid(self.player, create_from_split=True, asteroid_size=AsteroidSize.MEDIUM)
+            medium_2 = Asteroid(self.player, create_from_split=True, asteroid_size=AsteroidSize.MEDIUM)
+
+            medium_1.center_x = asteroid.center_x + medium_1.width
+            medium_1.center_y = asteroid.center_y + medium_1.height
+            medium_1.change_x = Asteroid.SPEED
+
+            medium_2.center_x = asteroid.center_x - medium_2.width
+            medium_2.center_y = asteroid.center_y - medium_2.height
+            medium_2.change_x = -Asteroid.SPEED
+
+            self.asteroids_list.append(medium_1)
+            self.asteroids_list.append(medium_2)
+        elif asteroid.size == AsteroidSize.MEDIUM:
+            # Split medium into two small ones
+            pass
+        else:
+            # If small, do nothing!
+            return
 
     def on_key_press(self, key, key_modifiers):
         """

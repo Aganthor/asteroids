@@ -8,7 +8,7 @@ import arcade
 
 
 class ExplosionAnimation(arcade.Sprite):
-    EXPLOSION_SCALE = 0.75
+    EXPLOSION_SCALE = 0.45
     ANIMATION_SPEED = 10.0
     MAX_CYCLE_TIME = 2
 
@@ -38,8 +38,8 @@ class ExplosionAnimation(arcade.Sprite):
 
     def on_update(self, delta_time: float = 1 / 60):
         # Update the animation.
-        if self.number_of_cycle > ExplosionAnimation.MAX_CYCLE_TIME:
-            return
+        # if self.number_of_cycle > ExplosionAnimation.MAX_CYCLE_TIME:
+        #     return
 
         self.time_since_last_swap += delta_time
         if self.time_since_last_swap > self.animation_update_time:
@@ -50,7 +50,11 @@ class ExplosionAnimation(arcade.Sprite):
                 self.current_texture = 0
                 self.set_texture(self.current_texture)
                 self.number_of_cycle += 1
+                print(f"Explosion cycle is {self.number_of_cycle}")
             self.time_since_last_swap = 0.0
 
     def is_animation_over(self):
-        return self.number_of_cycle > ExplosionAnimation.MAX_CYCLE_TIME
+        return self.number_of_cycle == ExplosionAnimation.MAX_CYCLE_TIME
+
+    def reset(self):
+        self.number_of_cycle = 0
