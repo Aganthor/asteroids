@@ -63,13 +63,13 @@ class Player(arcade.Sprite):
 
         # Are we out of bounds? If so, move to other side of screen.
         if self.center_y + self.height / 1.5 > gc.SCREEN_HEIGHT:
-            self.center_y = 0 + self.height
+            self.center_y = self.height
         if self.center_y < self.height / 2:
             self.center_y = gc.SCREEN_HEIGHT - self.height
         if self.center_x < 0:
             self.center_x = gc.SCREEN_WIDTH - self.width
         if self.center_x + self.width / 1.5 > gc.SCREEN_WIDTH:
-            self.center_x = 0 + self.width
+            self.center_x = self.width
 
         # Check to see if bullets go out of bounds.
         for bullet in self.bullet_list:

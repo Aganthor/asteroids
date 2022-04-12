@@ -11,6 +11,7 @@ TODO:
     player lives.
 """
 import random
+import math
 
 import arcade
 
@@ -183,13 +184,17 @@ class MyGame(arcade.Window):
             medium_1 = Asteroid(self.player, create_from_split=True, asteroid_size=AsteroidSize.MEDIUM)
             medium_2 = Asteroid(self.player, create_from_split=True, asteroid_size=AsteroidSize.MEDIUM)
 
+            angle = random.randrange(15, 285)
+
             medium_1.center_x = asteroid.center_x + medium_1.width
             medium_1.center_y = asteroid.center_y + medium_1.height
-            medium_1.change_x = Asteroid.SPEED
+            medium_1.change_x = math.cos(angle) * Asteroid.SPEED
+            medium_1.change_y = math.sin(angle) * Asteroid.SPEED
 
             medium_2.center_x = asteroid.center_x - medium_2.width
             medium_2.center_y = asteroid.center_y - medium_2.height
-            medium_2.change_x = -Asteroid.SPEED
+            medium_2.change_x = math.cos(angle) * -Asteroid.SPEED
+            medium_2.change_y = math.sin(angle) * -Asteroid.SPEED
 
             self.asteroids_list.append(medium_1)
             self.asteroids_list.append(medium_2)

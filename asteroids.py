@@ -67,7 +67,7 @@ class Asteroid(arcade.Sprite):
             self.center_x = randrange(0 + int(self.width), gc.SCREEN_WIDTH - int(self.width))
             self.center_y = randrange(0 + int(self.height), gc.SCREEN_HEIGHT - int(self.height))
 
-    def on_update(self, delta_time: float = 1 / 60):
+    def update(self):
         """
         Used to move the asteroid
         :param delta_time: elapsed time since last update.
@@ -78,9 +78,11 @@ class Asteroid(arcade.Sprite):
 
         # If the asteroid goes out of bounds, warp it to the other side.
         if self.center_x + self.width > gc.SCREEN_WIDTH:
-            self.center_x = 0
-            #self.change_x *= -1
-        if self.center_x - self.width < 0:
-            self.center_x = gc.SCREEN_WIDTH
-            #self.change_x *= -1
+            self.center_x = self.width
+        if self.center_x < 0:
+            self.center_x = gc.SCREEN_WIDTH - self.width
+        if self.center_y > gc.SCREEN_HEIGHT:
+            self.center_y = 0
+        if self.center_y < 0:
+            self.center_y = gc.SCREEN_HEIGHT
 
