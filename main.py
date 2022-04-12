@@ -9,6 +9,8 @@ TODO:
 - GUI:
     Have a GUI of some sort to render game information such as score, energy level
     player lives.
+- Player movement:
+    make movement accelerate upon keyup and then decelerate over time?
 """
 import random
 import math
